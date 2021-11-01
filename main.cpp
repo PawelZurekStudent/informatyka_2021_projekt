@@ -17,10 +17,12 @@ public:
 		pozycja = sprajt.getPosition();
 		return pozycja;
 	}
+
 	void move(sf::Vector2f ruch)
 	{
 		sprajt.move(ruch);
 	}
+	//ruch z klawiatury
 	sf::Clock zegar;
 	sf::Time czas = zegar.getElapsedTime();
 	int poprzedni_klawisz = sf::Keyboard::Down;
@@ -34,10 +36,12 @@ public:
 			zegar.restart();
 			poprzedni_klawisz = klawisz;
 		}
-		if (klawisz == 72)
+		if (klawisz == 72) //prwo
 			sprajt.move(1, 0);
-		if (klawisz == 71)
+		if (klawisz == 71) //lewo
 			sprajt.move(-1, 0);
+		if (klawisz == 73)
+			sprajt.move(0, 0); //skok
 	}
 private:
 	sf::Texture tekturka;
@@ -55,27 +59,20 @@ int main()
 
 	while (window.isOpen())
 	{
+		window.clear();
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
 		}
-		if (event.type == sf::Event::KeyPressed)
+		if (event.type == sf::Event::KeyPressed)//obsluga klawiatury
 		{
 			std::cout << "kod: " << event.key.code << std::endl;
-			/*if (event.key.code == sf::Keyboard::Up)
-				ludzik.move(sf::Vector2f(0, -1));
-			if (event.key.code == sf::Keyboard::Right)
-				ludzik.move(sf::Vector2f(0.5, 0));
-			if (event.key.code == sf::Keyboard::Left)
-				ludzik.move(sf::Vector2f(-1, 0));
-			if (event.key.code == sf::Keyboard::Down)
-				ludzik.move(sf::Vector2f(0, 1));*/
 			ludzik.rusz(event.key.code);
 		}
 		
-		window.clear();
+		
 		window.draw(ludzik.getPostac());
 		window.display();
 	}
