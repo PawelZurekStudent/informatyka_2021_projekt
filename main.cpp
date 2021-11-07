@@ -17,40 +17,51 @@ public:
 		pozycja = sprajt.getPosition();
 		return pozycja;
 	}
-
 	void move(sf::Vector2f ruch)
 	{
 		sprajt.move(ruch);
 	}
 	//ruch z klawiatury
-	sf::Clock zegar;
-	sf::Time czas = zegar.getElapsedTime();
-	int poprzedni_klawisz = sf::Keyboard::Down;
 	void rusz(sf::Keyboard::Key klawisz)
 	{
-		if (klawisz == poprzedni_klawisz)
+		std::cout <<klawisz<<std::endl;
+		if (klawisz == sf::Keyboard::W)
 		{
-			
+
 		}
-		else {
-			zegar.restart();
-			poprzedni_klawisz = klawisz;
+		if (klawisz == sf::Keyboard::A)
+		{
+			if (predkosc.x > 0)
+				predkosc.x = 0;
+			if (predkosc.x > -2)
+				predkosc.x -= 0.1;
+			sprajt.move(predkosc);
 		}
-		if (klawisz == 72) //prwo
-			sprajt.move(1, 0);
-		if (klawisz == 71) //lewo
-			sprajt.move(-1, 0);
-		if (klawisz == 73)
-			sprajt.move(0, 0); //skok
+		if (klawisz == sf::Keyboard::S)
+		{
+
+		}
+		if (klawisz == sf::Keyboard::D)
+		{
+			if (predkosc.x < 0)
+				predkosc.x = 0;
+			if (predkosc.x < 2)
+				predkosc.x += 0.1;
+			sprajt.move(predkosc);
+		}
 	}
 private:
 	sf::Texture tekturka;
 	sf::Sprite sprajt;
-	sf::Vector2f predkosc, pozycja;
+	sf::Vector2f predkosc = sf::Vector2f(0, 0), pozycja;
 };
+
 
 int main()
 {
+	//sf::Clock zegar;
+	//sf::Time czas = zegar.getElapsedTime();
+
 	sf::RenderWindow window(sf::VideoMode(1600, 900), "proby mechanik");
 	//na dobry start ucze sie mechanik ktore moga sie przydac
 	sf::CircleShape shape(50.f);
@@ -66,14 +77,22 @@ int main()
 			if (event.type == sf::Event::Closed)
 				window.close();
 		}
-		if (event.type == sf::Event::KeyPressed)//obsluga klawiatury
-		{
-			std::cout << "kod: " << event.key.code << std::endl;
-			ludzik.rusz(event.key.code);
-		}
+
+
+
+		//poruszanie sie
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+			ludzik.rusz(sf::Keyboard::W);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+			ludzik.rusz(sf::Keyboard::A);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+			ludzik.rusz(sf::Keyboard::S);
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+			ludzik.rusz(sf::Keyboard::D);
 		
-		
+		window.clear();
 		window.draw(ludzik.getPostac());
+
 		window.display();
 	}
 	return 0;
