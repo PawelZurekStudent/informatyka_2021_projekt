@@ -1,6 +1,15 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <random>
+//--------------------------------------------pomocne funkcje----------------------------------------------------------
+bool sprawdz_myszke(sf::Vector2i myszka, sf::Vector2f pole, sf::Vector2f rozmiar)
+{
+	//std::cout << myszka.x << " " << pole.x << "\n";
+	if (myszka.y > pole.y && myszka.y < pole.y + rozmiar.y)
+		return true;
+	else
+		return false;
+}
 //--------------------------------------------klasa postaci-----------------------------------------------------------
 class postac
 {
@@ -97,41 +106,111 @@ private:
 class pajak1 // zwykly pajak chodzi i pije
 {
 public:
-	pajak1(int poziom, sf::Vector2f postac)
+	pajak1()
 	{
-		//ilosc pajakow zalezna od poziomu pozycja postaci aby uniknac pojawiania sie w postaci
+		tekturka.loadFromFile("pajak1.png");
 	}
-	sf::Sprite getPostac() { return sprajt; }
-	sf::Vector2f getPosition()//tutaj to samo pozycja srodka
+	void tworz(int poziom, sf::Vector2f pos_gracz)
 	{
-		pozycja = sprajt.getPosition();
-		return pozycja;
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		ilosc = poziom;
+		pajak1T = new sf::Sprite[ilosc];
+		for (int i = 0; i < ilosc; i++)
+		{
+			pajak1T[i].setTexture(tekturka);
+			pajak1T[i].setPosition(sf::Vector2f(gen() % 1600, gen() % 900));
+		}
 	}
-	void move(sf::Vector2f ruch)
+	void rysuj(sf::RenderWindow& okno)
 	{
-		sprajt.move(ruch);
+		for (int i = 0; i < ilosc; i++)
+		{
+			okno.draw(pajak1T[i]);
+		}
+	}
+	void rusz(sf::Vector2f pos_gracz)
+	{
+		for (int i = 0; i < ilosc; i++)
+		{
+			pajak1T[i].move(pos_gracz.x+10*i,pos_gracz.y-10*i);
+		}
 	}
 private:
 	sf::Texture tekturka;
-	sf::Sprite sprajt;
+	sf::Sprite *pajak1T;
 	sf::Vector2f predkosc = sf::Vector2f(0, 0), pozycja;
+	bool atak = false;
+	int ilosc = 0;
 };
 //--------------------------------------------klasa meniu-------------------------------------------------------------
 class meniu
 {
 public:
-	meniu()
+	meniu(bool zapis)
 	{
-
+		//czciaka
+		czcionka.loadFromFile("Scary Roots Font.otf");
+		//tekst i bloki
+		for (int i = 0; i < 4; i++)
+		{
+			//tekst menu
+			menu[i].setFont(czcionka);
+			menu[i].setCharacterSize(120);
+			menu[i].setFillColor(sf::Color::White);
+			menu[i].setPosition(sf::Vector2f(100, 120 + 130 * i));
+			//prostokaty
+			prostokat[i].setSize(sf::Vector2f(630, 125));
+			prostokat[i].setPosition(sf::Vector2f(90, 140 + 130 * i));
+			prostokat[i].setFillColor(sf::Color::Transparent);
+		}
+		menu[0].setString("Kontynuuj");
+		menu[1].setString("Nowa Gra");
+		menu[2].setString("Pomoc");
+		menu[3].setString("Wyjscie");
+		if (zapis == false)
+		{
+			prostokat[0].setPosition(sf::Vector2f(0,-500));
+			menu[0].setPosition(0, -500);
+		}
+	}
+	void draw(sf::RenderWindow& okno)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			okno.draw(prostokat[i]);
+			okno.draw(menu[i]);
+		}
+	}
+	int wybor_opcji(sf::Vector2i polozenie, bool wcisniety)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			if (sprawdz_myszke(polozenie, prostokat[i].getPosition(), prostokat[i].getSize()) == true)
+			{
+				//prostokat[i].setFillColor(sf::Color::Green);
+				if (wcisniety == true)
+				{
+					//prostokat[i].setFillColor(sf::Color::Yellow);
+					return i;
+				}
+			}
+			//else
+				//prostokat[i].setFillColor(sf::Color::Blue);
+		}
+		return -1;
 	}
 private:
 	sf::Font czcionka;
-	sf::Text menu;
+	sf::Text menu[4];
+	sf::RectangleShape prostokat[4];
 	int wybranaPozycja = 0;
 };
 //------------------------------------------------main-----------------------------------------------------------------
 int main()
 {
+	//pomoc i obluga
+	bool zapis = true, trudnosc = false;
 	//okno
 	sf::RenderWindow window(sf::VideoMode(1600, 900), "proby mechanik");
 	window.setFramerateLimit(60); 
@@ -139,10 +218,12 @@ int main()
 
 	//postacie i mapa w grze
 	postac ludzik(sf::Vector2f(window.getSize().x/2, window.getSize().y / 2));
+	pajak1 pejok;
 
-	//menu i pomoc
-	int wybrana_opcja = 0, poz_trudnosci = 0;
+	//menu i zapis
+	int wybrana_opcja = -1, poz_trudnosci = 0;
 	sf::Texture pomoc, tlo;
+	meniu menu(zapis);
 	//petla
 	while (window.isOpen())
 	{
@@ -154,20 +235,27 @@ int main()
 				window.close();
 		}
 		window.clear();
-		if (wybrana_opcja == 0) // wyswietlam meniu
+		// wyswietlam meniu
+		if (wybrana_opcja == -1)
 		{
-			//eeee
+			wybrana_opcja = menu.wybor_opcji(sf::Mouse::getPosition(window), sf::Mouse::isButtonPressed(sf::Mouse::Left));
+			menu.draw(window);
 		}
-		if (wybrana_opcja == 1 || wybrana_opcja == 2)// wyswietlam gre
+		// wyswietlam gre
+		if (wybrana_opcja == 0 || wybrana_opcja == 1)
 		{
-			if (wybrana_opcja == 2)
+			if (wybrana_opcja == 0)
 			{
 				//wczytanie zapisu gra trwa dalej
 			}
-			else if (poz_trudnosci == 0)
+			else if (wybrana_opcja == 1)
 			{
 				//menu wyboru poziomu trudnosci
-				
+				if (trudnosc == false)
+				{
+					pejok.tworz(10, ludzik.getPosition());
+					trudnosc = true;
+				}
 			}
 			//poruszanie sie
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
@@ -181,11 +269,19 @@ int main()
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 				ludzik.rusz(sf::Keyboard::D);
 			else
-				ludzik.rusz(sf::Keyboard::P);
-			//klawisze o i p sa uzyte jako klawisze braku aktywnosci
+				ludzik.rusz(sf::Keyboard::P);	//klawisze o i p sa uzyte jako klawisze braku aktywnosci
+			//ruch pajakami
+			pejok.rusz(sf::Vector2f(1,1));// ludzik.getPosition());
+
+
+
+
+			
 			window.draw(ludzik.getPostac());
+			pejok.rysuj(window);
 		}
 
+		
 
 		window.display();
 	}
